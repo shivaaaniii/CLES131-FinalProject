@@ -4,5 +4,21 @@ format: html
 ---
 
 ```{r}
-#My first change!!
+library(ggplot2)
+library(tidyverse)
+library(dplyr)
+```
+
+```{r}
+GDP_Life <- read.csv("life-expectancy-vs-gdp-per-capita.csv")
+```
+
+```{r}
+ggplot(GDP_Life, 
+       aes(
+         x=gdp_per_capita, 
+         y=life_expectancy_0,
+         color=owid_region)) +
+  geom_point(size=2) +
+  coord_trans(x = "log2")
 ```
