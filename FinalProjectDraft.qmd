@@ -14,11 +14,76 @@ GDP_Life <- read.csv("life-expectancy-vs-gdp-per-capita.csv")
 ```
 
 ```{r}
-ggplot(GDP_Life, 
-       aes(
-         x=gdp_per_capita, 
-         y=life_expectancy_0,
-         color=owid_region)) +
-  geom_point(size=2) +
-  coord_trans(x = "log2")
+# ggplot(GDP_Life, 
+#        aes(
+#          x=gdp_per_capita, 
+#          y=life_expectancy_0,
+#          color=owid_region)) +
+#   geom_point(size=2) +
+#   coord_trans(x = "log2")
 ```
+
+We want to get the sum of plastic exports in each country, then organize by the max
+
+```{r}
+exports <- read.csv("PlasticExportsAllCountries.csv")
+countriesALL <- unique(exports$Country)
+```
+
+```{r}
+sums <- c()
+for (co in countriesALL){
+  temp <- exports |>
+    filter(Country == co)
+  sums <- c(sums, sum(temp$Vessel.Total.Exports.SWT..kg.))
+}
+total <- data.frame(countriesALL, sums) |>
+  arrange(desc(sums)) |>
+  slice(1:10)
+```
+
+These will be our actual countries of interest, these are the 10 countries that have taken the largest sum of US plastics from 2002-2025.
+
+```{r}
+countries <- total$countriesALL
+plastics <- exports |>
+  filter(Country %in% countries)
+  
+```
+
+Line chart!
+```{r}
+plastics |>
+  ggplot(aes(
+    x=Time, 
+    y=Vessel.Total.Exports.SWT..kg., 
+    group=Country, 
+    color=Country)) +
+  geom_line() +
+  ylim(0,1e+10) +
+  scale_color_manual(values = c("China" = "red", "India" = "orange", "Indonesia" = "yellow", "Korea, South" = "green", "Malaysia" = "cyan", "Mexico" = "blue", "Taiwan" = "purple", "Thailand"="hotpink", "Turkey"="brown", "Vietnam" = "black"))
+```
+
+China used to take so many imports it goes off the grid!! We can see those specific values below
+```{r}
+china <- plastics |>
+  filter(Country == "China")
+china[4:5]
+```
+
+We can also see if these are still the top 10 countries in 2025, we will get those below
+```{r}
+top10_2025 <- plastics |>
+  filter(Time == "2025 through July") |>
+  arrange(desc(Vessel.Total.Exports.SWT..kg.)) |>
+  slice(1:10)
+top10_2025 <- top10_2025$Country
+top10_2025
+```
+
+Let's see the difference between the total top 10 and the 2025 top 10!
+```{r}
+intersect(countries, top10_2025)
+```
+
+They are still the same!! Even with stricter import laws in Hong Kong and China, they are still at the top of the list for US plastic imports, although lower in the 10.
