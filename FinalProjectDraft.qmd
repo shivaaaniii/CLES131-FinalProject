@@ -47,7 +47,7 @@ plastics |>
     y=Vessel.Total.Exports.SWT..kg., 
     group=Country, 
     color=Country)) +
-  geom_line() +
+  geom_line(linewidth = 1) +
   ylim(0,1e+10) +
   scale_color_manual(values = c("China" = "red", 
                                 "India" = "orange", 
@@ -56,7 +56,7 @@ plastics |>
                                 "Malaysia" = "cyan", 
                                 "Mexico" = "blue", 
                                 "Taiwan" = "purple", 
-                                "Thailand"="hotpink", 
+                                "Thailand"="magenta", 
                                 "Turkey"="brown", 
                                 "Vietnam" = "black"))
 ```
@@ -89,35 +89,34 @@ They are still the same!! Even with stricter import laws in Hong Kong and China,
 
 ```{r}
 quality <- read.csv("life-expectancy-vs-gdp-per-capita.csv")
+quality <- quality |>
+  filter(Entity %in% c("South Korea", "United States", countries))
 ```
 
 ```{r}
-qualityPlastic <- merge(x = quality, y = plastics, by.x = c("Entity", "Year"), by.y = c("Country","Time"))
+plastics <- plastics %>%
+      mutate(Time = as.integer(Time))
+qualityPlastic <- left_join(x = quality, y = plastics, by=join_by(Entity == Country, Year == Time))
 ```
 
 Lets start by plotting each of these countries using the most recent data we have in 2023.
 
 ```{r}
+qualityPlastic$Vessel.Total.Exports.SWT..kg.[is.na(qualityPlastic$Vessel.Total.Exports.SWT..kg.)] <- 3
 qualityPlastic |>
   filter(Year == "2022") |>
   ggplot(aes(x = gdp_per_capita,
              y = life_expectancy_0,
              color = Entity)) +
-  scale_color_manual(values = c("China" = "red", 
-                                "India" = "orange", 
-                                "Indonesia" = "yellow", 
-                                "Korea, South" = "green", # named differently :(
-                                "Malaysia" = "cyan", 
-                                "Mexico" = "blue", 
-                                "Taiwan" = "purple", 
-                                "Thailand"="hotpink", 
-                                "Turkey"="brown", 
-                                "Vietnam" = "black")) +
-  geom_point(aes(size=Vessel.Total.Exports.SWT..kg.)) +
-  geom_point(data = filter(quality, Year == "2022" 
-                           & Entity == "United States"), 
-             aes(x = gdp_per_capita,
-                 y = life_expectancy_0,
-                 color = "gray45",
-                 size = 30))
+  # scale_color_manual(values = c("China" = "red", 
+  #                               "India" = "orange", 
+  #                               "Indonesia" = "yellow", 
+  #                               "South Korea" = "green",
+  #                               "Malaysia" = "cyan", 
+  #                               "Mexico" = "blue", 
+  #                               "Taiwan" = "purple", 
+  #                               "Thailand"="magenta", 
+  #                               "Turkey"="brown", 
+  #                               "Vietnam" = "black")) +
+  geom_point(aes(size=Vessel.Total.Exports.SWT..kg.))
 ```
