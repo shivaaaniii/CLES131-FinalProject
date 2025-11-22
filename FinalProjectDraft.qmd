@@ -89,12 +89,10 @@ They are still the same!! Even with stricter import laws in Hong Kong and China,
 
 ```{r}
 quality <- read.csv("life-expectancy-vs-gdp-per-capita.csv")
-quality <- quality |>
-  filter(Entity %in% c("South Korea", "United States", countries))
 ```
 
 ```{r}
-plastics <- plastics %>%
+plastics <- plastics |>
       mutate(Time = as.integer(Time))
 qualityPlastic <- left_join(x = quality, y = plastics, by=join_by(Entity == Country, Year == Time))
 ```
@@ -104,7 +102,7 @@ Lets start by plotting each of these countries using the most recent data we hav
 ```{r}
 qualityPlastic$Vessel.Total.Exports.SWT..kg.[is.na(qualityPlastic$Vessel.Total.Exports.SWT..kg.)] <- 3
 qualityPlastic |>
-  filter(Year == "2022") |>
+  filter(Year == "2022" & Entity %in% countries) |>
   ggplot(aes(x = gdp_per_capita,
              y = life_expectancy_0,
              color = Entity)) +
@@ -119,4 +117,29 @@ qualityPlastic |>
   #                               "Turkey"="brown", 
   #                               "Vietnam" = "black")) +
   geom_point(aes(size=Vessel.Total.Exports.SWT..kg.))
+```
+
+```{r}
+GDPRel <- lm(Vessel.Total.Exports.SWT..kg. ~ gdp_per_capita, data = qualityPlastic)
+summary(GDPRel)
+```
+
+```{r}
+ggplot(data = qualityPlastic, aes(x = Vessel.Total.Exports.SWT..kg., y = gdp_per_capita)) +
+  geom_point() +
+  geom_smooth(method = "lm")
+```
+
+```{r}
+LifeRel <- lm(Vessel.Total.Exports.SWT..kg. ~ life_expectancy_0, data = qualityPlastic)
+summary(GDPRel)
+```
+
+```{r}
+ggplot(data = qualityPlastic, 
+       aes(
+         x = Vessel.Total.Exports.SWT..kg., 
+         y = life_expectancy_0)) +
+  geom_point() +
+  geom_smooth(method = "lm")
 ```
