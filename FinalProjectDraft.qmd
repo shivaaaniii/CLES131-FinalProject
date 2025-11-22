@@ -14,7 +14,7 @@ library(dplyr)
 We want to get the sum of plastic exports in each country, then organize by the max
 
 ```{r}
-exports <- read.csv("PlasticExportsAllCountries.csv")
+exports <- read.csv("data/PlasticExportsAllCountries.csv")
 countriesALL <- unique(exports$Country)
 ```
 
@@ -61,7 +61,7 @@ plastics |>
                                 "Vietnam" = "black"))
 ```
 
-China used to take so many imports it goes off the grid!! We can see those specific values below
+China used to take so many imports it goes off the grid!! We can see those specific values below.
 ```{r}
 china <- plastics |>
   filter(Country == "China")
@@ -88,7 +88,7 @@ They are still the same!! Even with stricter import laws in Hong Kong and China,
 # Quality of Life
 
 ```{r}
-quality <- read.csv("life-expectancy-vs-gdp-per-capita.csv")
+quality <- read.csv("data/life-expectancy-vs-gdp-per-capita.csv")
 ```
 
 ```{r}
@@ -125,14 +125,16 @@ summary(GDPRel)
 ```
 
 ```{r}
-ggplot(data = qualityPlastic, aes(x = Vessel.Total.Exports.SWT..kg., y = gdp_per_capita)) +
+ggplot(data = qualityPlastic, 
+       aes(x = Vessel.Total.Exports.SWT..kg., 
+           y = gdp_per_capita)) +
   geom_point() +
   geom_smooth(method = "lm")
 ```
 
 ```{r}
 LifeRel <- lm(Vessel.Total.Exports.SWT..kg. ~ life_expectancy_0, data = qualityPlastic)
-summary(GDPRel)
+summary(LifeRel)
 ```
 
 ```{r}
