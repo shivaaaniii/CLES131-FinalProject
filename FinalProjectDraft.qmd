@@ -9,12 +9,25 @@ library(tidyverse)
 library(dplyr)
 ```
 
+# Problem Statement
+
+Plastic production continues to increase by millions of tons annually, with 18% of it coming solely from North America and 46% from Asia (Thomas, et al. 2024).
+
+With this sheer amount of plastic production, there is worry about managing plastic waste. While there are multiple types, one key factor of most plastics is their persistence; Plastic bags take about 100 years to decompose effectively (Dey, et al. 2023). Currently, the most common factors of plastic waste management are decomposition, incineration, and land filling (Dey, et al. 2023). Each of these methods create harmful byproducts for environments and the atmosphere. Land filling and discarded plastic in particular have detrimental effects on coastal ecosystems: specifically coral. When coral reefs come into contact with plastic, “likelihood of disease increases from 4% to 89%” (Lamb, et al. 2018).
+
+One question that may arise: What about recycling? Journalists from the Guardian found that most of the plastic recycled in the US ends up shipped to other countries and sold for profit. In 2015, about 1.6m tons of recycled plastic was sent to China and Hong Kong for processing, however the majority was contaminated or non-recyclable, adding to the plastic waste issue (McCormick, et al. 2019).
+
+We plan on looking at this data of exported plastic from the US and compare it to both quality of life in these countries as well as the health of coral reefs along their coasts. We hope to answer our hypothesis: is there a relationship between US plastic exports and coral bleaching from microplastics?
+
 # US Plastic Exports
 
-We want to get the sum of plastic exports in each country, then organize by the max
+## Sums of Plastic Exports
+
+We want to get the sum of plastic exports in each country, to ultimately find which countries are taking in the most total exports.
 
 ```{r}
 exports <- read.csv("data/PlasticExportsAllCountries.csv")
+exports$Country <- replace(exports$Country, exports$Country=="Korea, South", "South Korea") # fix names 
 countriesALL <- unique(exports$Country)
 ```
 
@@ -30,16 +43,19 @@ total <- data.frame(countriesALL, sums) |>
   slice(1:10)
 ```
 
-These will be our actual countries of interest, these are the 10 countries that have taken the largest sum of US plastics from 2002-2025.
+These will be our actual countries of interest, these are the top 10 countries that have taken the largest sum of US plastics from 2002-2025.
 
 ```{r}
 countries <- total$countriesALL
 plastics <- exports |>
   filter(Country %in% countries)
-  
+countries
 ```
 
-Line chart!
+## Change Over Time
+
+Now we can plot each of these top 10 countries, to see how much plastic they import from the US has changed over time.
+
 ```{r}
 plastics |>
   ggplot(aes(
@@ -52,7 +68,7 @@ plastics |>
   scale_color_manual(values = c("China" = "red", 
                                 "India" = "orange", 
                                 "Indonesia" = "yellow", 
-                                "Korea, South" = "green", 
+                                "South Korea" = "green", 
                                 "Malaysia" = "cyan", 
                                 "Mexico" = "blue", 
                                 "Taiwan" = "purple", 
@@ -62,13 +78,19 @@ plastics |>
 ```
 
 China used to take so many imports it goes off the grid!! We can see those specific values below.
+
 ```{r}
 china <- plastics |>
   filter(Country == "China")
 china[4:5]
 ```
 
-We can also see if these are still the top 10 countries in 2025, we will get those below
+Looking at the plot, what interesting changes do you see? One general trend is how other countries seem to increase after China's sharp decrease. But as of 2025, each country seems to be decreasing how much plastic they are accepting from the US.
+
+## Difference in 2025
+
+We can also see if these are still the top 10 countries in 2025. Let's get the 2025 top 10 below.
+
 ```{r}
 top10_2025 <- plastics |>
   filter(Time == "2025 through July") |>
@@ -78,14 +100,19 @@ top10_2025 <- top10_2025$Country
 top10_2025
 ```
 
-Let's see the difference between the total top 10 and the 2025 top 10!
+Let's see the difference between the total (2002-2025) top 10 and the 2025 top 10!
+
 ```{r}
 intersect(countries, top10_2025)
 ```
 
-They are still the same!! Even with stricter import laws in Hong Kong and China, they are still at the top of the list for US plastic imports, although the actual placements in the top 10 may have changed.
+They are still the same! Even with stricter import laws in Hong Kong and China, they are still at the top of the list for US plastic imports, although the actual placements in the top 10 may have changed.
 
 # Quality of Life
+
+## Combining data
+
+We have data for the GDP and Life expectancy in each country over time, lets combine that with our plastic data to see if there are any trends with quality of life and how much plastic is imported from the US.
 
 ```{r}
 quality <- read.csv("data/life-expectancy-vs-gdp-per-capita.csv")
@@ -94,10 +121,15 @@ quality <- read.csv("data/life-expectancy-vs-gdp-per-capita.csv")
 ```{r}
 plastics <- plastics |>
       mutate(Time = as.integer(Time))
+
 qualityPlastic <- left_join(x = quality, y = plastics, by=join_by(Entity == Country, Year == Time))
 ```
 
-Lets start by plotting each of these countries using the most recent data we have in 2023.
+Now we have added a column in our country data to include the kilograms of plastic imported from the US in each country.
+
+## Plotting the data
+
+Lets start by plotting our top 10 countries using the most recent data we have in 2022. We can size each point by how much plastic it imported from the US in that year.
 
 ```{r}
 qualityPlastic$Vessel.Total.Exports.SWT..kg.[is.na(qualityPlastic$Vessel.Total.Exports.SWT..kg.)] <- 3
@@ -106,42 +138,22 @@ qualityPlastic |>
   ggplot(aes(x = gdp_per_capita,
              y = life_expectancy_0,
              color = Entity)) +
-  # scale_color_manual(values = c("China" = "red", 
-  #                               "India" = "orange", 
-  #                               "Indonesia" = "yellow", 
-  #                               "South Korea" = "green",
-  #                               "Malaysia" = "cyan", 
-  #                               "Mexico" = "blue", 
-  #                               "Taiwan" = "purple", 
-  #                               "Thailand"="magenta", 
-  #                               "Turkey"="brown", 
-  #                               "Vietnam" = "black")) +
-  geom_point(aes(size=Vessel.Total.Exports.SWT..kg.))
+  scale_color_manual(values = c("China" = "red",
+                                "India" = "orange",
+                                "Indonesia" = "yellow",
+                                "South Korea" = "green",
+                                "Malaysia" = "cyan",
+                                "Mexico" = "blue",
+                                "Taiwan" = "purple",
+                                "Thailand"="magenta",
+                                "Turkey"="brown",
+                                "Vietnam" = "black",
+                                "United States" = "gray")) +
+  geom_point(aes(size=Vessel.Total.Exports.SWT..kg.)) +
+  geom_point(data=qualityPlastic |>
+  filter(Year == "2022" & Entity=="United States"))
 ```
 
-```{r}
-GDPRel <- lm(Vessel.Total.Exports.SWT..kg. ~ gdp_per_capita, data = qualityPlastic)
-summary(GDPRel)
-```
+While there are dots all over this plot, we can see each of our countries had a lower GDP than the small gray dot of the US. Surprisingly, though, there are a wide variety of life expectancies among the top 10 countries to take in plastic imported from the US.
 
-```{r}
-ggplot(data = qualityPlastic, 
-       aes(x = Vessel.Total.Exports.SWT..kg., 
-           y = gdp_per_capita)) +
-  geom_point() +
-  geom_smooth(method = "lm")
-```
-
-```{r}
-LifeRel <- lm(Vessel.Total.Exports.SWT..kg. ~ life_expectancy_0, data = qualityPlastic)
-summary(LifeRel)
-```
-
-```{r}
-ggplot(data = qualityPlastic, 
-       aes(
-         x = Vessel.Total.Exports.SWT..kg., 
-         y = life_expectancy_0)) +
-  geom_point() +
-  geom_smooth(method = "lm")
-```
+# Coral Bleaching
