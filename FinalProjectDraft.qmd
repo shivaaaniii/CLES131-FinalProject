@@ -140,7 +140,7 @@ Lets start by plotting our top 10 countries using the most recent data we have i
 
 qualityPlastic$Vessel.Total.Exports.SWT..kg.[is.na(qualityPlastic$Vessel.Total.Exports.SWT..kg.)] <- 3 # Make sure US is not size 0
 p <- qualityPlastic |>
-  filter(Entity %in% countries) 
+  filter(Entity %in% countries & Year > 2002) 
 plot <- p|>
   ggplot(aes(x = gdp_per_capita,
              y = life_expectancy_0,
@@ -158,7 +158,7 @@ plot <- p|>
                                 "United States" = "gray")) +
   geom_point(aes(size=Vessel.Total.Exports.SWT..kg., frame = Year)) +
   geom_point(data=qualityPlastic |>
-  filter(Entity=="United States"), aes(frame = Year))
+  filter(Entity=="United States" & Year > 2002), aes(frame = Year))
 
 ggplotly(plot)
 ```
