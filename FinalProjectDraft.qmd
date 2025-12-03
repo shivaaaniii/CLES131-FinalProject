@@ -3,19 +3,19 @@ title: "FinalProjectDraft"
 format: html
 ---
 
-```{r}
-library(ggplot2)
+```{library(ggplot2)}
 library(tidyverse)
 library(dplyr)
 library(plotly)
 
 
 # Coral Bleaching
-```{r}
+
 Bleaching <- read_csv("data/global_bleaching_environmental (3).csv")
 
 Bleaching$Country_Name <- replace(Bleaching$Country_Name, Bleaching$Country_Name=="Japan", "South Korea")
 # Japan and South Korea share coral reefs hence above code
+Bleaching$Percent_Bleaching <- replace(Bleaching$Percent_Bleaching, Bleaching$Percent_Bleaching=="nd", "0")
 countries_use <- c(
   "China", "India", "Indonesia", "South Korea", "Malaysia", "Mexico",
   "Taiwan", "Thailand", "Vietnam"
@@ -26,8 +26,16 @@ countries_use <- c(
 # explained by https://www.statology.org/r-select-rows-by-condition/
 clean_bleaching <- Bleaching[Bleaching$Country_Name %in% countries_use,
                       c("Country_Name", "Percent_Bleaching")]
+clean_bleaching <- clean_bleaching |>
+  dplyr::mutate(
+    Percent_Bleaching = dplyr::na_if(Percent_Bleaching, "nd"),
+    Percent_Bleaching = as.numeric(Percent_Bleaching)
+  )
+view(clean_bleaching)
+
 ```
-This filters out the countries that were included in the top 10 plastic imports. 
+
+This filters out the countries that were included in the top 10 plastic imports.
 
 ```{r}
 clean_bleaching |>
@@ -45,46 +53,64 @@ clean_bleaching |>
     "Mexico" = "blue",
     "Taiwan" = "purple",
     "Thailand" = "magenta",
-    "Vietnam" = "black"
+    "Vietnam" = "black",
+    "South Korea" = "green"
   )) +
+  ylim(0, 100) +
   labs(
     x = "Country",
     y = "Percent Bleaching",
     title = "Coral Bleaching Percent by Country"
   ) 
 ```
+
 #Microplastics
+
 ```{r}
 MarineMicroplastics <- read_csv("data/Marine_Microplastics_WGS84_8553846406879449657.csv")
-countries_use <- c(
-  "China", "India", "Indonesia", "South Korea", "Malaysia", "Mexico",
-  "Taiwan", "Thailand", "Vietnam"
-)
-clean_microplastics <- MarineMicroplastics[MarineMicroplastics$Country %in% countries_use,
-                      c("Country", "Concentration class range")]
 
+countries_use <- c( "China", "India", "Indonesia", "South Korea", "Malaysia", "Mexico", "Taiwan", "Thailand", "Vietnam" ) 
+
+MarineMicroplastics <- MarineMicroplastics %>%
+  #https://www.statology.org/is-na/
+  mutate(
+    Country = case_when(
+      is.na(Country) & Region == "Bay of Bengal"     ~ "India",
+      is.na(Country) & Region == "Java Sea"          ~ "Indonesia",
+      is.na(Country) & Region == "East China Sea"    ~ "South Korea",
+      is.na(Country) & Region == "Malacca Strait"   ~ "Malaysia",
+      is.na(Country) & Region == "South China Sea" ~ "Vietnam",
+      TRUE ~ Country
+    )
+  )
+
+
+clean_microplastics <- MarineMicroplastics[MarineMicroplastics$Country %in% countries_use, c("Country", "Region", "Concentration class range")]
+view(clean_microplastics)
 ```
 
 ```{r}
-plot <- ggplot(clean_microplastics, aes(
-  x = Country,
-  y = Concentration.class.range,   # <-- update this if needed
-  color = Country
-)) +
-  geom_point(size = 4) +
-  scale_color_manual(values = c(
-    "China"    = "red",
-    "India"     = "orange",
+ggplot(clean_microplastics,
+       aes(x = Country, fill = `Country`)) +
+  geom_bar() +
+  scale_fill_manual(values = c(
+    "China" = "red",
+    "India" = "orange",
     "Indonesia" = "yellow",
-    "Malaysia"  = "cyan",
-    "Mexico"    = "blue",
-    "Taiwan"    = "purple",
-    "Thailand"  = "magenta",
-    "Vietnam"   = "black"
-  )+   labs(
-    title = "Microplastic Concentration Class Range by Country",
+    "Malaysia" = "cyan",
+    "Mexico" = "blue",
+    "Taiwan" = "purple",
+    "Thailand" = "magenta",
+    "Vietnam" = "black",
+    "South Korea" = "green"
+  )) +
+  labs(
+    title = "Microplastic Concentration Class Ranges by Country",
     x = "Country",
-    y = "Concentration Class Range"
-  )) 
+    y = "Count",
+    fill = "Country"
+  )
+
+
 
 ```
