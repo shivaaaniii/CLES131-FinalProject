@@ -165,4 +165,35 @@ ggplotly(plot)
 
 While there are dots all over this plot, we can see each of our countries had a lower GDP than the small gray dot of the US. Surprisingly, though, there are a wide variety of life expectancies among the top 10 countries to take in plastic imported from the US.
 
+## Surprising Regressions!
+
+While it may seem like large amounts of plastic imports would detriment rather than help a country's wellbeing, there is actually a strong positive trend between kilograms of plastic imports and both GDP and life expectancy!
+
+What do you think contributes to this relationship?
+
+```{r}
+GDPRel <- lm(Vessel.Total.Exports.SWT..kg. ~ gdp_per_capita, data = qualityPlastic)
+summary(GDPRel)
+```
+
+```{r}
+ggplot(data = qualityPlastic, aes(x = Vessel.Total.Exports.SWT..kg., y = gdp_per_capita)) +
+  geom_point() +
+  geom_smooth(method = "lm")
+```
+
+```{r}
+LifeRel <- lm(Vessel.Total.Exports.SWT..kg. ~ life_expectancy_0, data = qualityPlastic)
+summary(GDPRel)
+```
+
+```{r}
+ggplot(data = qualityPlastic, 
+       aes(
+         x = Vessel.Total.Exports.SWT..kg., 
+         y = life_expectancy_0)) +
+  geom_point() +
+  geom_smooth(method = "lm")
+```
+
 # Coral Bleaching
