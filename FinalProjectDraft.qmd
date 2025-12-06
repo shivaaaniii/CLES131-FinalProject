@@ -184,7 +184,7 @@ ggplot(data = qualityPlastic, aes(x = Vessel.Total.Exports.SWT..kg., y = gdp_per
 
 ```{r}
 LifeRel <- lm(Vessel.Total.Exports.SWT..kg. ~ life_expectancy_0, data = qualityPlastic)
-summary(GDPRel)
+summary(LifeRel)
 ```
 
 ```{r}
@@ -201,9 +201,6 @@ ggplot(data = qualityPlastic,
 ## Bleaching Stats
 ```{r}
 Bleaching <- read_csv("data/global_bleaching_environmental (3).csv")
-
-Bleaching <- Bleaching |>
-  filter(Date_Month == "12")
 
 Bleaching$Country_Name <- replace(Bleaching$Country_Name, Bleaching$Country_Name=="Japan", "South Korea")
 # Japan and South Korea share coral reefs hence above code
@@ -312,11 +309,11 @@ importCoral <- left_join(x = clean_bleaching, y = plastics, by=join_by(Country_N
 ```
 
 ```{r}
-importCoral |>
+scatter <- importCoral |>
   ggplot(aes(
     x=Vessel.Total.Exports.SWT..kg., 
     y=Percent_Bleaching, 
-    #group=Country, 
+    group=Date_Year,
     color=Country_Name)) +
   geom_point() +
   scale_color_manual(values = c("China" = "red", 
@@ -329,5 +326,27 @@ importCoral |>
                                 "Thailand"="magenta", 
                                 "Turkey"="brown", 
                                 "Vietnam" = "black")) +
-  labs(title="Percent Bleaching vs US Plastic Imports (2002-2019)")
+  labs(title="Percent Bleaching vs US Plastic Imports (2002-2020)",
+       subtitle="Hover over points to see Year and Specific Values")
+
+ggplotly(scatter)
+```
+
+```{r}
+importCoral |>
+  ggplot(aes(
+    x=Vessel.Total.Exports.SWT..kg., 
+    y=Percent_Bleaching,)) +
+  geom_point() +
+  geom_smooth(method = "lm")
+```
+
+```{r}
+importCoral |>
+  filter(Vessel.Total.Exports.SWT..kg. < 1e+10) |>
+  ggplot(aes(
+    x=Vessel.Total.Exports.SWT..kg., 
+    y=Percent_Bleaching,)) +
+  geom_point() +
+  geom_smooth(method = "lm")
 ```
