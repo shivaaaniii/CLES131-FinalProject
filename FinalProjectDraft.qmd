@@ -440,4 +440,6 @@ We have a negative trend! It is clear by looking at the dots, as well. This mean
 Can you think of why this could be? Rather than an actual real-life trend, think about how we collected the data, and what data we included in our analysis.
 
 # Conclusion
+Based on what we found, it seems like the answer to our question would be no! We did not find evidence of a relationship between US plastic exports and coral bleaching from microplastics. 
+
 What data would we want to conclusively answer our hypothesis?
