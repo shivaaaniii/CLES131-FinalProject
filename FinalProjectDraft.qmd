@@ -229,9 +229,16 @@ ggplot(data = qualityPlastic,
        caption="The graph includes data from each country from 2002-2022.\nIt includes a linear regression line.\nThe positive trend indicates that more plastic imported into a country from the US means a higher life expectancy.")
 ```
 
-# Coral and Plastic
+# Coral Bleaching
 
 ## Bleaching Stats
+
+We are using data from [BCO-DMO](https://www.bco-dmo.org/), a data repository funded by the NSF and containing crowdsourced oceanographic data. We are using their dataset on coral bleaching from 1980-2020. The dataset includes data from all reefs in the below spatial area.
+
+![image](data/bleachingArea.png)
+
+As this dataset is huge, we want to narrow down to three columns: The year of the data collection, the country the reef belongs to, and the percent bleaching of the reef. We also want to narrow down to only the top 10 countries we are interested in, with the exception of Turkey that has no reefs along its coast.
+
 ```{r}
 Bleaching <- read_csv("data/global_bleaching_environmental (3).csv")
 
@@ -255,21 +262,28 @@ clean_bleaching <- clean_bleaching |>
   )
 
 ```
+## Bleaching per Country
 
-This filters out the countries that were included in the top 10 plastic imports.
-
-We want the averages of each country, so we need to make a new dataframe using our cleaned data.
+Since there are large variations in the number of samples for each country, we want to average across each sample to find a normalized amount of bleaching across the reefs of each country. We also need to average across years, as almost each country is not sampled each year.
 
 ```{r}
-#bleachAverages <- 
+blCountries <- unique(clean_bleaching$Country_Name)
+bleachAverages <- c()
+for (c in blCountries){
+  vals <- clean_bleaching |>
+    filter(Country_Name==c)
+  avg <- mean(vals$Percent_Bleaching)
+  bleachAverages <- c(bleachAverages, avg)
+}
+clean_bleaching_avg <- data.frame(Country = blCountries, Percent_Bleaching_Avg = bleachAverages)
 ```
 
 ```{r}
-clean_bleaching |>
+clean_bleaching_avg |>
   ggplot(aes(
-    x = Country_Name,
-    y = Percent_Bleaching,
-    fill = Country_Name
+    x = Country,
+    y = Percent_Bleaching_Avg,
+    fill = Country
   )) +
   geom_col() +
   scale_fill_manual(values = c(
@@ -283,69 +297,94 @@ clean_bleaching |>
     "Vietnam" = "black",
     "South Korea" = "green"
   )) +
-  ylim(0, 100) +
+  ylim(0, 50) +
   labs(
     x = "Country",
     y = "Average Percent Bleaching",
-    title = "Coral Bleaching Percent by Country",
+    title = "Average Coral Bleaching Percent across Reefs (1983-2020)",
     caption="Each bar represents a different country.\nTheir height encodes the average amount of bleaching recorded in their reefs from 1983-2020."
   ) 
 ```
 
-## Microplastics
+Looking at our bars, we can see India and Mexico have significant increased bleaching compared to the other countries graphed. Another surprising trend is that China is near 0 despite being the number 1 importer of US plastics for many years, and by a long shot! The main driver of coral bleaching is ocean surface temperature, so the temperature of each reef sampled could effect how microplastics effect them.
+
+Since we are plotting averages, we also want to make sure we have a proportionate amount of samples for each country. Lets list the number of samples for each below.
 
 ```{r}
-MarineMicroplastics <- read_csv("data/Marine_Microplastics_WGS84_8553846406879449657.csv")
-
-countries_use <- c( "China", "India", "Indonesia", "South Korea", "Malaysia", "Mexico", "Taiwan", "Thailand", "Vietnam" ) 
-
-MarineMicroplastics <- MarineMicroplastics %>%
-  #https://www.statology.org/is-na/
-  mutate(
-    Country = case_when(
-      is.na(Country) & Region == "Bay of Bengal"     ~ "India",
-      is.na(Country) & Region == "Java Sea"          ~ "Indonesia",
-      is.na(Country) & Region == "East China Sea"    ~ "South Korea",
-      is.na(Country) & Region == "Malacca Strait"   ~ "Malaysia",
-      is.na(Country) & Region == "South China Sea" ~ "Vietnam",
-      TRUE ~ Country
-    )
-  )
-
-
-clean_microplastics <- MarineMicroplastics[MarineMicroplastics$Country %in% countries_use, c("Country", "Region", "Concentration class range")]
-view(clean_microplastics)
+sampleCounts <- c()
+for (c in blCountries){
+  vals <- clean_bleaching |>
+    filter(Country_Name==c)
+  count <- length(vals$Percent_Bleaching)
+  sampleCounts <- c(sampleCounts, count)
+}
+clean_bleaching_cnts <- data.frame(Country = blCountries, Number_Samples = sampleCounts)
+clean_bleaching_cnts
 ```
 
-```{r}
-ggplot(clean_microplastics,
-       aes(x = Country, fill = `Country`)) +
-  geom_bar() +
-  scale_fill_manual(values = c(
-    "China" = "red",
-    "India" = "orange",
-    "Indonesia" = "yellow",
-    "Malaysia" = "cyan",
-    "Mexico" = "blue",
-    "Taiwan" = "purple",
-    "Thailand" = "magenta",
-    "Vietnam" = "black",
-    "South Korea" = "green"
-  )) +
-  labs(
-    title = "Microplastic Concentration Class Ranges by Country",
-    x = "Country",
-    y = "Count",
-    fill = "Country"
-  )
-```
+Looking at the numbers, we can see Malaysia is very oversampled and India are very undersampled. There is quite a variance in magnitude of samples across countries, so we need to be mindful of these differences when we compare their averages. For example, we should consider India's bleching to be around 45% rather than exactly 45%, due to the limited amount of samples we are averaging across.
+
+<!-- ## Microplastics -->
+
+<!-- ```{r} -->
+<!-- MarineMicroplastics <- read_csv("data/Marine_Microplastics_WGS84_8553846406879449657.csv") -->
+
+<!-- countries_use <- c( "China", "India", "Indonesia", "South Korea", "Malaysia", "Mexico", "Taiwan", "Thailand", "Vietnam" )  -->
+
+<!-- MarineMicroplastics <- MarineMicroplastics %>% -->
+<!--   #https://www.statology.org/is-na/ -->
+<!--   mutate( -->
+<!--     Country = case_when( -->
+<!--       is.na(Country) & Region == "Bay of Bengal"     ~ "India", -->
+<!--       is.na(Country) & Region == "Java Sea"          ~ "Indonesia", -->
+<!--       is.na(Country) & Region == "East China Sea"    ~ "South Korea", -->
+<!--       is.na(Country) & Region == "Malacca Strait"   ~ "Malaysia", -->
+<!--       is.na(Country) & Region == "South China Sea" ~ "Vietnam", -->
+<!--       TRUE ~ Country -->
+<!--     ) -->
+<!--   ) -->
+
+
+<!-- clean_microplastics <- MarineMicroplastics[MarineMicroplastics$Country %in% countries_use, c("Country", "Region", "Concentration class range")] -->
+<!-- view(clean_microplastics) -->
+<!-- <!-- ``` --> -->
+
+<!-- ```{r} -->
+<!-- ggplot(clean_microplastics, -->
+<!--        aes(x = Country, fill = `Country`)) + -->
+<!--   geom_bar() + -->
+<!--   scale_fill_manual(values = c( -->
+<!--     "China" = "red", -->
+<!--     "India" = "orange", -->
+<!--     "Indonesia" = "yellow", -->
+<!--     "Malaysia" = "cyan", -->
+<!--     "Mexico" = "blue", -->
+<!--     "Taiwan" = "purple", -->
+<!--     "Thailand" = "magenta", -->
+<!--     "Vietnam" = "black", -->
+<!--     "South Korea" = "green" -->
+<!--   )) + -->
+<!--   labs( -->
+<!--     title = "Microplastic Concentration Class Ranges by Country", -->
+<!--     x = "Country", -->
+<!--     y = "Count", -->
+<!--     fill = "Country" -->
+<!--   ) -->
+<!-- ``` -->
 
 # Relation to Plastic Imports
 
-```{r}
+## Bleaching vs Plastic
 
+Now that we have seen the amount of bleaching in each of our countries, lets compare it with the amount of plastic imported from the US into each.
+
+We first need to join our datasets by Country and Year.
+
+```{r}
 importCoral <- left_join(x = clean_bleaching, y = plastics, by=join_by(Country_Name == Country, Date_Year == Time))
 ```
+
+Now we can plot to see if the percent amount of bleaching in each country tends to increase with the amount plastic exported from the US to that reef's country.
 
 ```{r}
 scatter <- importCoral |>
@@ -365,10 +404,24 @@ scatter <- importCoral |>
                                 "Thailand"="magenta", 
                                 "Turkey"="brown", 
                                 "Vietnam" = "black")) +
-  labs(title="Percent Bleaching vs US Plastic Imports (2002-2020)",
-       subtitle="Hover over points to see Year and Specific Values")
+  labs(title="Percent Bleaching vs US Plastic Imports (2002-2020)")
 
 ggplotly(scatter)
+```
+*Each dot represents a sample taken of a countries coral reef, color-coded as per the legend.*
+*The position of each dot shows the percent bleaching of that reef sample as well as the amount of plastic exported to that country the year that sample was collected.*
+*Hover over each point to see its information, including the Year of that particular sample.*
+*Double-click on a country in the legend to only see its points, click others to include more.*
+
+These results are quite surprising! The points to the left corresponding to countries which take in less plastic from the US tend to have much higher points and in turn much higher bleaching. As we saw in the bar graph, China has very low percentage of bleaching despite taking in the most plastic from the US overall.
+
+## Regression
+
+Let's do some regression line to see some statistical analysis.
+
+```{r}
+BlPlas <- lm(Percent_Bleaching ~ `Plastic Exports (kg)`, data = importCoral)
+summary(BlPlas)
 ```
 
 ```{r}
@@ -377,8 +430,14 @@ importCoral |>
     x=`Plastic Exports (kg)`, 
     y=Percent_Bleaching,)) +
   geom_point() +
-  geom_smooth(method = "lm")
+  geom_smooth(method = "lm") + 
+  labs(title="Plastic Exports vs Percent Bleaching",
+       caption="The graph includes data from each country from 2002-2020.\nIt includes a linear regression line.\nThe negative trend indicates that the more plastic exported to a country leads to lower percent bleaching in its reefs.")
 ```
+
+We have a negative trend! It is clear by looking at the dots, as well. This means that we actually see a trend of lower percentage bleaching in countries that take in more plastic from the US. Huh!
+
+Can you think of why this could be? Rather than an actual real-life trend, think about how we collected the data, and what data we included in our analysis.
 
 # Conclusion
 What data would we want to conclusively answer our hypothesis?
