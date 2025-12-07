@@ -1,9 +1,9 @@
 ---
-title: "FinalProjectDraft"
+title: "CLES 131 Final Project: Marine Plastics"
 format: html
 ---
 
-```{r}
+```{r, include=FALSE}
 library(ggplot2)
 library(tidyverse)
 library(dplyr)
@@ -11,7 +11,35 @@ library(plotly)
 
 ```
 
-# Problem Statement
+# Table of Contents
+
+1.  [Problem Statement](#problem)
+
+2.  [US Plastic Exports](#exports)
+
+-   2.1 [Sums of Plastic Exports](#sum)
+-   2.2 [Change Over Time](#time)
+-   2.3 [Difference in 2025](#2025)
+
+3.  [Quality of Life](#quality)
+
+-   3.1 [Combining Data](#combine)
+-   3.2 [Plotting the Data](#plot)
+-   3.3 [Surprising Regressions!](#reg)
+
+4.  [Coral Bleaching](#bleaching)
+
+-   4.1 [Bleaching Data](#stats)
+-   4.2 [Bleaching per Country](#country)
+
+5.  [Relation to Plastic Imports](#imports)
+
+-   5.1 [Bleaching vs Plastic](#bleach-plastic)
+-   5.2 [Regression](#reg2)
+
+6.  [Conclusion](#conclusion)
+
+# Problem Statement {#problem}
 
 Plastic production continues to increase by millions of tons annually, with 18% of it coming solely from North America and 46% from Asia ([Thomas, et al. 2024](https://doi.org/10.6028/NIST.AMS.100-64)).
 
@@ -23,9 +51,9 @@ We plan on looking at this data of exported plastic from the US and compare it t
 
 **Is there a relationship between US plastic exports and coral bleaching from microplastics?**
 
-# US Plastic Exports
+# US Plastic Exports {#plastic}
 
-## Sums of Plastic Exports
+## Sums of Plastic Exports {#sum}
 
 We want to get the sum of plastic exports in each country, to ultimately find which countries are taking in the most total exports from the US. The [US Census Bureau](https://usatrade.census.gov/) keeps track of how many kilograms of plastic are exported and to where, so we will make use of this data.
 
@@ -58,11 +86,11 @@ plastics <- exports |>
 countries
 ```
 
-## Change Over Time
+## Change Over Time {#time}
 
 Now we can plot each of these top 10 countries, to see how much plastic they import from the US has changed over time.
 
-```{r}
+```{r, fig.height=15, fig.width=10}
 plastics |>
   ggplot(aes(
     x=Time, 
@@ -70,7 +98,6 @@ plastics |>
     group=Country, 
     color=Country)) +
   geom_line(linewidth = 1) +
-  ylim(0,1e+10) +
   geom_vline(xintercept = 2017, 
              color = "gray55", 
              linetype = "dashed", 
@@ -96,17 +123,9 @@ plastics |>
        caption="Data from US Census Bureau.\nEach line represents a different country, color-coded as per the legend.\nChina took plastic above the domain from 2004-2017.\nEach point is the amount of plastic the US exported to each country in a certain year.\n2025 only includes data through July.")
 ```
 
-China used to take so many imports it goes off the grid!! We can see the specific amount of exports sent to China below.
-
-```{r}
-china <- plastics |>
-  filter(Country == "China")
-china[4:5]
-```
-
 Looking at the plot, what interesting changes do you see? One general trend is how other countries seem to increase after China's sharp decrease due to stricter import laws. But as of 2024, each country seems to be decreasing how much plastic they are accepting from the US with the exceptions of Turkey, Malaysia, and Mexico. 2025 seems to have much less plastic exports since it only has data through July.
 
-## Difference in 2025
+## Difference in 2025 {#2025}
 
 We can also see if these are still the top 10 countries in 2025. Let's get the 2025 top 10 below.
 
@@ -127,9 +146,9 @@ intersect(countries, top10_2025)
 
 They are still the same! Even with stricter import laws in Hong Kong and China, they are still at the top of the list for US plastic imports, although the actual placements in the top 10 may have changed.
 
-# Quality of Life
+# Quality of Life {#quality}
 
-## Combining data
+## Combining data {#combine}
 
 [Our World in Data](https://ourworldindata.org/) is a UK non-profit focused on compiling global data about poverty, disease, hunger, climate change, war, existential risks, and inequality. We are using their data on the GDP and Life expectancy in each country over time. Lets combine that with our plastic data to see if there are any trends with quality of life and how much plastic is imported from the US.
 
@@ -149,11 +168,11 @@ qualityPlastic <- left_join(x = quality, y = plastics, by=join_by(Entity == Coun
 
 Now we have added a column in our country data to include the kilograms of plastic imported from the US in each country.
 
-## Plotting the data
+## Plotting the data {#plot}
 
 Lets start by plotting our top 10 countries as the years go by. We can size each point by how much plastic it imported from the US in that year.
 
-```{r}
+```{r, fig.width=10, fig.height=15}
 # Following: https://plotly.com/ggplot2/animations/
 
 qualityPlastic$`Plastic Exports (kg)`[is.na(qualityPlastic$`Plastic Exports (kg)`)] <- 3 # Make sure US is not size 0
@@ -182,10 +201,15 @@ plot <- p|>
 
 ggplotly(plot)
 ```
+
 *Each dot represents a country, color-coded as per the legend.*
+
 *Each dot is sized by the amount of plastic imported from the US each year.*
+
 *The gray dot is the US and has a constant size.*
+
 *Hover over each point to see its information.*
+
 *Double-click on a country in the legend to only see that point, click others to include more.*
 
 While there are dots all over this plot, we can see each of our countries had a lower GDP than the small gray dot of the US. Surprisingly, though, there are a wide variety of life expectancies among the top 10 countries to take in plastic imported from the US.
@@ -194,7 +218,7 @@ Watching the animation of changes over time, one big trend we can notice is a gl
 
 Are there any issues you can find with choosing GDP per capita and life expectancy as indicators of quality of life? Think about how we find averages!
 
-## Surprising Regressions!
+## Surprising Regressions! {#reg}
 
 While it may seem like large amounts of plastic imports would detriment rather than help a country's wellbeing, there is actually a strong positive trend between kilograms of plastic imports and both GDP and life expectancy!
 
@@ -205,7 +229,7 @@ GDPRel <- lm(`Plastic Exports (kg)` ~ `GDP per Capita ($)`, data = qualityPlasti
 summary(GDPRel)
 ```
 
-```{r}
+```{r, fig.width=7, fig.height=5}
 ggplot(data = qualityPlastic, aes(x = `Plastic Exports (kg)`, y = `GDP per Capita ($)`)) +
   geom_point() +
   geom_smooth(method = "lm") +
@@ -218,7 +242,7 @@ LifeRel <- lm(`Plastic Exports (kg)` ~ `Life Expectancy (years)`, data = quality
 summary(LifeRel)
 ```
 
-```{r}
+```{r, fig.width=7, fig.height=5}
 ggplot(data = qualityPlastic, 
        aes(
          x = `Plastic Exports (kg)`, 
@@ -229,13 +253,13 @@ ggplot(data = qualityPlastic,
        caption="The graph includes data from each country from 2002-2022.\nIt includes a linear regression line.\nThe positive trend indicates that more plastic imported into a country from the US means a higher life expectancy.")
 ```
 
-# Coral Bleaching
+# Coral Bleaching {#bleaching}
 
-## Bleaching Stats
+## Bleaching Data {#stats}
 
 We are using data from [BCO-DMO](https://www.bco-dmo.org/), a data repository funded by the NSF and containing crowdsourced oceanographic data. We are using their dataset on coral bleaching from 1980-2020. The dataset includes data from all reefs in the below spatial area.
 
-![image](data/bleachingArea.png)
+![Spatial Extent of the Data](data/bleachingArea.png)
 
 As this dataset is huge, we want to narrow down to three columns: The year of the data collection, the country the reef belongs to, and the percent bleaching of the reef. We also want to narrow down to only the top 10 countries we are interested in, with the exception of Turkey that has no reefs along its coast.
 
@@ -262,7 +286,8 @@ clean_bleaching <- clean_bleaching |>
   )
 
 ```
-## Bleaching per Country
+
+## Bleaching per Country {#country}
 
 Since there are large variations in the number of samples for each country, we want to average across each sample to find a normalized amount of bleaching across the reefs of each country. We also need to average across years, as almost each country is not sampled each year.
 
@@ -278,7 +303,7 @@ for (c in blCountries){
 clean_bleaching_avg <- data.frame(Country = blCountries, Percent_Bleaching_Avg = bleachAverages)
 ```
 
-```{r}
+```{r, fig.width=7, fig.height=5}
 clean_bleaching_avg |>
   ggplot(aes(
     x = Country,
@@ -324,57 +349,95 @@ clean_bleaching_cnts
 
 Looking at the numbers, we can see Malaysia is very oversampled and India are very undersampled. There is quite a variance in magnitude of samples across countries, so we need to be mindful of these differences when we compare their averages. For example, we should consider India's bleching to be around 45% rather than exactly 45%, due to the limited amount of samples we are averaging across.
 
-<!-- ## Microplastics -->
+```{r, include=FALSE}
+# ## Microplastics --> -->
+# 
+# ```{r} --> -->
+# 
+# <!-- <!-- MarineMicroplastics <- read_csv("data/Marine_Microplastics_WGS84_8553846406879449657.csv") --> -->
+# 
+# <!-- <!-- countries_use <- c( "China", "India", "Indonesia", "South Korea", "Malaysia", "Mexico", "Taiwan", "Thailand", "Vietnam" )  --> -->
+# 
+# <!-- <!-- MarineMicroplastics <- MarineMicroplastics %>% --> -->
+# 
+# <!-- <!--   #https://www.statology.org/is-na/ --> -->
+# 
+# <!-- <!--   mutate( --> -->
+# 
+# <!-- <!--     Country = case_when( --> -->
+# 
+# <!-- <!--       is.na(Country) & Region == "Bay of Bengal"     ~ "India", --> -->
+# 
+# <!-- <!--       is.na(Country) & Region == "Java Sea"          ~ "Indonesia", --> -->
+# 
+# <!-- <!--       is.na(Country) & Region == "East China Sea"    ~ "South Korea", --> -->
+# 
+# <!-- <!--       is.na(Country) & Region == "Malacca Strait"   ~ "Malaysia", --> -->
+# 
+# <!-- <!--       is.na(Country) & Region == "South China Sea" ~ "Vietnam", --> -->
+# 
+# <!-- <!--       TRUE ~ Country --> -->
+# 
+# <!-- <!--     ) --> -->
+# 
+# <!-- <!--   ) --> -->
+# 
+# <!-- <!-- clean_microplastics <- MarineMicroplastics[MarineMicroplastics$Country %in% countries_use, c("Country", "Region", "Concentration class range")] --> -->
+# 
+# <!-- <!-- view(clean_microplastics) --> -->
+# 
+# <!-- <!-- <!-- ``` --> -->
+# 
+# <!-- --\> -->
+# 
+# <!-- <!-- ```{r} --> -->
+# 
+# <!-- <!-- ggplot(clean_microplastics, --> -->
+# 
+# <!-- <!--        aes(x = Country, fill = `Country`)) + --> -->
+# 
+# <!-- <!--   geom_bar() + --> -->
+# 
+# <!-- <!--   scale_fill_manual(values = c( --> -->
+# 
+# <!-- <!--     "China" = "red", --> -->
+# 
+# <!-- <!--     "India" = "orange", --> -->
+# 
+# <!-- <!--     "Indonesia" = "yellow", --> -->
+# 
+# <!-- <!--     "Malaysia" = "cyan", --> -->
+# 
+# <!-- <!--     "Mexico" = "blue", --> -->
+# 
+# <!-- <!--     "Taiwan" = "purple", --> -->
+# 
+# <!-- <!--     "Thailand" = "magenta", --> -->
+# 
+# <!-- <!--     "Vietnam" = "black", --> -->
+# 
+# <!-- <!--     "South Korea" = "green" --> -->
+# 
+# <!-- <!--   )) + --> -->
+# 
+# <!-- <!--   labs( --> -->
+# 
+# <!-- <!--     title = "Microplastic Concentration Class Ranges by Country", --> -->
+# 
+# <!-- <!--     x = "Country", --> -->
+# 
+# <!-- <!--     y = "Count", --> -->
+# 
+# <!-- <!--     fill = "Country" --> -->
+# 
+# <!-- <!--   ) --> -->
+# 
+# <!-- <!-- ``` --> -->
+```
 
-<!-- ```{r} -->
-<!-- MarineMicroplastics <- read_csv("data/Marine_Microplastics_WGS84_8553846406879449657.csv") -->
+# Relation to Plastic Imports {#imports}
 
-<!-- countries_use <- c( "China", "India", "Indonesia", "South Korea", "Malaysia", "Mexico", "Taiwan", "Thailand", "Vietnam" )  -->
-
-<!-- MarineMicroplastics <- MarineMicroplastics %>% -->
-<!--   #https://www.statology.org/is-na/ -->
-<!--   mutate( -->
-<!--     Country = case_when( -->
-<!--       is.na(Country) & Region == "Bay of Bengal"     ~ "India", -->
-<!--       is.na(Country) & Region == "Java Sea"          ~ "Indonesia", -->
-<!--       is.na(Country) & Region == "East China Sea"    ~ "South Korea", -->
-<!--       is.na(Country) & Region == "Malacca Strait"   ~ "Malaysia", -->
-<!--       is.na(Country) & Region == "South China Sea" ~ "Vietnam", -->
-<!--       TRUE ~ Country -->
-<!--     ) -->
-<!--   ) -->
-
-
-<!-- clean_microplastics <- MarineMicroplastics[MarineMicroplastics$Country %in% countries_use, c("Country", "Region", "Concentration class range")] -->
-<!-- view(clean_microplastics) -->
-<!-- <!-- ``` --> -->
-
-<!-- ```{r} -->
-<!-- ggplot(clean_microplastics, -->
-<!--        aes(x = Country, fill = `Country`)) + -->
-<!--   geom_bar() + -->
-<!--   scale_fill_manual(values = c( -->
-<!--     "China" = "red", -->
-<!--     "India" = "orange", -->
-<!--     "Indonesia" = "yellow", -->
-<!--     "Malaysia" = "cyan", -->
-<!--     "Mexico" = "blue", -->
-<!--     "Taiwan" = "purple", -->
-<!--     "Thailand" = "magenta", -->
-<!--     "Vietnam" = "black", -->
-<!--     "South Korea" = "green" -->
-<!--   )) + -->
-<!--   labs( -->
-<!--     title = "Microplastic Concentration Class Ranges by Country", -->
-<!--     x = "Country", -->
-<!--     y = "Count", -->
-<!--     fill = "Country" -->
-<!--   ) -->
-<!-- ``` -->
-
-# Relation to Plastic Imports
-
-## Bleaching vs Plastic
+## Bleaching vs Plastic {#bleach-plastic}
 
 Now that we have seen the amount of bleaching in each of our countries, lets compare it with the amount of plastic imported from the US into each.
 
@@ -386,7 +449,7 @@ importCoral <- left_join(x = clean_bleaching, y = plastics, by=join_by(Country_N
 
 Now we can plot to see if the percent amount of bleaching in each country tends to increase with the amount plastic exported from the US to that reef's country.
 
-```{r}
+```{r, fig.width=7, fig.height=5}
 scatter <- importCoral |>
   ggplot(aes(
     x=`Plastic Exports (kg)`, 
@@ -408,14 +471,18 @@ scatter <- importCoral |>
 
 ggplotly(scatter)
 ```
+
 *Each dot represents a sample taken of a countries coral reef, color-coded as per the legend.*
+
 *The position of each dot shows the percent bleaching of that reef sample as well as the amount of plastic exported to that country the year that sample was collected.*
+
 *Hover over each point to see its information, including the Year of that particular sample.*
+
 *Double-click on a country in the legend to only see its points, click others to include more.*
 
 These results are quite surprising! The points to the left corresponding to countries which take in less plastic from the US tend to have much higher points and in turn much higher bleaching. As we saw in the bar graph, China has very low percentage of bleaching despite taking in the most plastic from the US overall.
 
-## Regression
+## Regression {#reg2}
 
 Let's do some regression line to see some statistical analysis.
 
@@ -424,7 +491,7 @@ BlPlas <- lm(Percent_Bleaching ~ `Plastic Exports (kg)`, data = importCoral)
 summary(BlPlas)
 ```
 
-```{r}
+```{r, fig.width=7, fig.height=5}
 importCoral |>
   ggplot(aes(
     x=`Plastic Exports (kg)`, 
@@ -439,7 +506,14 @@ We have a negative trend! It is clear by looking at the dots, as well. This mean
 
 Can you think of why this could be? Rather than an actual real-life trend, think about how we collected the data, and what data we included in our analysis.
 
-# Conclusion
-Based on what we found, it seems like the answer to our question would be no! We did not find evidence of a relationship between US plastic exports and coral bleaching from microplastics. 
+# Conclusion {#conclusion}
+
+Based on what we found, it seems like the answer to our question would be no! We did not find evidence of a relationship between US plastic exports and coral bleaching from microplastics. However, the data doesn't conclusively tell us that there is *no* relationship.
 
 What data would we want to conclusively answer our hypothesis?
+
+We would need our measurements to correspond between our US plastics export data and our coral bleaching data. Since we sort the plastic exports by country and year, our bleaching data should be sorted similarly. We have a list of a number of samples from reefs off the coast of the countries we are interested in, collected over the span of 40 years. This data does not follow a regular time scale and is based on particular reefs rather than countries. What we want is the amount of bleaching across all coasts of the country, not just in individual reefs, and collected at the same times each year. This way our bleaching and plastic data would be on the same temporal and spatial scale. However, the challenge with using countries as a spatial scale is that coral reefs are not always associated with a specific country, and may border multiple.
+
+While this wasn't directly what we were asking, our comparison of quality of life with US plastic exports is also not conlcusive. Rather than averaging GDP and Life Expectancy across entire countries, we should compare across relevant actors: plastic sellers and plastic sorters in each of the countries we are concerned with. In order to fully understand the social justice implications of plastic exports, we need data on health and wealth disparities between plastic sorters and those profiting off of plastic exports.
+
+Overall, we did collect and visualize interesting data on US Plastic Exports and Coral Bleaching, as well as other country data. Although we did not reach a conclusive answer to our question, we have a good springboard for further exploration using other datasets.
