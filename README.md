@@ -8,13 +8,15 @@ The project is a report done in the qmd file 'FinalProject.qmd'
 
 The project is also rendered into the HTML file 'FinalProject.html' which requires the 'FinalProject_files' folder.
 
+The project is hosted on Quarto Pubs which requires a '\_publish.yml' file.
+
 All of the data and figures used in the report are listed in the 'data' folder.
 
 All work was done in the R project, 'CLES131FinalProject.Rproj'
 
 ## Project
 
-Hosted on RPubs: [Project](https://rpubs.com/rrajase/CLES131Final)
+Hosted on Quarto Pubs: [Project](https://rrajase04.quarto.pub/cles-131-final-project-marine-plastics/)
 
 ## Written Report
 

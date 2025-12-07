@@ -1,0 +1,4 @@
+- source: FinalProject.qmd
+  quarto-pub:
+    - id: ab720f68-2dd4-440e-bccb-c42539ace7ab
+      url: https://rrajase04.quarto.pub/cles-131-final-project-marine-plastics
